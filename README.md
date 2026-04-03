@@ -1,0 +1,1 @@
+Repo de habilidad, Estrucuta Hexagonal, para el desarrollo de habilidades en el ámbito laboral, personal.

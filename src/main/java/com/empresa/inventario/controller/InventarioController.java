@@ -1,8 +1,7 @@
 package com.empresa.inventario.controller;
 
 import com.empresa.inventario.models.Inventario;
-import com.empresa.inventario.service.IInventarioService;
-import com.empresa.inventario.service.InventarioServiceImpl;
+import com.empresa.inventario.service.InventarioUseCase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,20 +12,20 @@ import java.util.List;
 public class InventarioController {
 
     @Autowired
-    private IInventarioService iInventarioService;
+    private InventarioUseCase inventarioUseCase;
 
     @GetMapping
-    public List<Inventario> obtenerInventarios(){
-        return iInventarioService.obtenerInventarios();
+    public List<Inventario> obtenerInventarios() {
+        return inventarioUseCase.obtenerInventarios();
     }
 
     @PostMapping("/registrar")
     public Inventario registrarInventario(@RequestBody Inventario inventario) {
-        return iInventarioService.registrarInventario(inventario);
+        return inventarioUseCase.registrarInventario(inventario);
     }
 
     @PutMapping("/actualizar-estado/{id}")
-    public Inventario entregarProducto(@PathVariable String id, @RequestParam String estado){
-        return iInventarioService.actualizarEstado(id, estado);
+    public Inventario entregarProducto(@PathVariable String id, @RequestParam String estado) {
+        return inventarioUseCase.actualizarEstado(id, estado);
     }
 }

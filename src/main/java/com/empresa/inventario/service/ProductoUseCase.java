@@ -4,6 +4,6 @@ import com.empresa.inventario.models.Producto;
 
 import java.util.List;
 
-public interface IProductoService {
+public interface ProductoUseCase {
     List<Producto> obtenerProductos();
 }

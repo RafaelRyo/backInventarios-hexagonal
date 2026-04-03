@@ -1,7 +1,8 @@
 package com.empresa.inventario.repository;
 
-import com.empresa.inventario.models.Inventario;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
 
-public interface InventarioRepository extends MongoRepository<Inventario, String> {
+@Repository
+public interface InventarioRepository extends MongoRepository<InventarioEntity, String> {
 }

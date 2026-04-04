@@ -29,6 +29,10 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok:1.18.30'
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 	implementation 'mysql:mysql-connector-java:8.0.33'
+
+	// Prometheus & Actuator para métricas
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	runtimeOnly  'io.micrometer:micrometer-registry-prometheus'
 }
 
 tasks.named('test') {

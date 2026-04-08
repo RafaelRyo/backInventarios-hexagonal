@@ -33,6 +33,9 @@ dependencies {
 	// Prometheus & Actuator para métricas
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	runtimeOnly  'io.micrometer:micrometer-registry-prometheus'
+
+	// Logstash - envío de logs estructurados (JSON) hacia ELK stack
+	implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
 }
 
 tasks.named('test') {

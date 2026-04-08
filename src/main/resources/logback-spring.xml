@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!--
+        APPENDER 1: CONSOLA (siempre activo en local)
+        Muestra los logs con colores en la terminal donde corre el micro.
+        Útil para desarrollo, sin depender de que Logstash esté levantado.
+    -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!--
+        APPENDER 2: LOGSTASH (envía logs en formato JSON por TCP)
+        - destination: host:puerto donde corre Logstash
+        - LogstashEncoder: serializa cada log como JSON estructurado,
+          incluyendo timestamp, level, thread, logger, message, stack_trace, etc.
+        - Cuando Logstash no está disponible, los logs se pierden en este canal
+          pero siguen apareciendo en consola (gracias al appender CONSOLE).
+    -->
+    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+        <!-- En Docker usa el nombre del servicio: logstash:5000 -->
+        <!-- En local usa: localhost:5000                        -->
+        <destination>localhost:5000</destination>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <!-- Agrega el nombre de la app en cada log para filtrar en Kibana -->
+            <customFields>{"app":"inventario-microservice","environment":"local"}</customFields>
+        </encoder>
+        <!-- Si Logstash no responde, no bloquea el micro (no-op en timeout) -->
+        <connectionStrategy>
+            <roundRobin>
+                <connectionTTL>5 minutes</connectionTTL>
+            </roundRobin>
+        </connectionStrategy>
+    </appender>
+
+    <!--
+        PERFIL "logstash": activo solo cuando Spring profile = logstash
+        Así en local normal solo usas consola, y en docker/prod activas Logstash.
+    -->
+    <springProfile name="logstash">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="LOGSTASH"/>
+        </root>
+    </springProfile>
+
+    <!--
+        PERFIL por defecto (local, sin perfil específico):
+        Solo consola, no intenta conectar a Logstash.
+    -->
+    <springProfile name="!logstash">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+</configuration>
+

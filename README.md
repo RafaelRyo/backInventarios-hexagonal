@@ -1,227 +1,187 @@
-# Proyecto Inventario - Arquitectura Hexagonal
+# Inventario - Microservicio con Arquitectura Hexagonal
 
-Repo de habilidad, Estructura Hexagonal, para el desarrollo de habilidades en el ámbito laboral y personal.
+Microservicio Spring Boot para gestión de productos e inventario, con arquitectura hexagonal (puertos y adaptadores), persistencia híbrida (MySQL + MongoDB) y observabilidad con métricas y logs.
 
-## 📋 Descripción
+## Estado actual del proyecto
 
-Este proyecto implementa una arquitectura hexagonal (ports and adapters) para gestionar un sistema de inventario con productos. La arquitectura permite que el dominio sea independiente de frameworks y tecnologías externas, facilitando la testabilidad, mantenibilidad y escalabilidad.
+- El micro corre localmente desde IntelliJ o Gradle en `localhost:8080`.
+- La infraestructura (bases de datos y observabilidad) corre en un **repo aparte** con Docker Compose.
+- Este repositorio contiene el código del micro, no los contenedores de infra.
 
----
+## Estructura actual (resumen)
 
-## 🏗️ Estructura del Proyecto Recomendada (Opción 2 - Híbrida)
-
-Esta es la estructura que se aconseja implementar para mantener claridad y orden en la arquitectura hexagonal:
-
-```
+```text
 src/main/java/com/empresa/inventario/
-│
-├── 📁 models/                              (Dominio - Entidades Puras)
-│   ├── Inventario.java
-│   └── Producto.java
-│
-├── 📁 ports/                               (Puertos - Contratos)
-│   ├── ProductoUseCase.java                (Puerto entrada)
-│   ├── InventarioUseCase.java              (Puerto entrada)
-│   ├── ProductoRepositoryPort.java         (Puerto salida)
-│   └── InventarioRepositoryPort.java       (Puerto salida)
-│
-├── 📁 service/                             (Casos de Uso - Aplicación)
-│   └── 📁 impl/
-│       ├── ProductoServiceImpl.java
-│       └── InventarioServiceImpl.java
-│
-├── 📁 repository/                          (Adaptadores de Salida)
-│   ├── 📁 entity/                          (Entidades de Persistencia)
-│   │   ├── ProductoEntity.java
-│   │   └── InventarioEntity.java
-│   │
-│   ├── 📁 jpa/                             (Repositorios JPA)
-│   │   └── ProductoRepository.java         (extends JpaRepository)
-│   │
-│   ├── 📁 mongo/                           (Repositorios MongoDB)
-│   │   └── InventarioRepository.java       (extends MongoRepository)
-│   │
-│   └── 📁 adapter/                         (Adaptadores del Puerto)
-│       ├── ProductoRepositoryAdapter.java
-│       └── InventarioRepositoryAdapter.java
-│
-├── 📁 controller/                          (Adaptadores de Entrada - Web)
+├── controller/
 │   ├── ProductoController.java
 │   └── InventarioController.java
-│
-├── 📁 config/                              (Configuración)
-│   └── WebConfig.java
-│
-└── InventarioApplication.java              (Punto de entrada)
+├── models/
+│   ├── Producto.java
+│   └── Inventario.java
+├── service/
+│   ├── ProductoUseCase.java
+│   ├── InventarioUseCase.java
+│   └── impl/
+│       ├── ProductoServiceImpl.java
+│       └── InventarioServiceImpl.java
+├── repository/
+│   ├── ProductoRepositoryPort.java
+│   ├── InventarioRepositoryPort.java
+│   ├── ProductoRepositoryAdapter.java
+│   ├── InventarioRepositoryAdapter.java
+│   ├── ProductoRepository.java
+│   ├── InventarioRepository.java
+│   ├── ProductoEntity.java
+│   └── InventarioEntity.java
+└── InventarioApplication.java
 ```
 
----
+## Stack técnico
 
-## 🔄 Flujo de la Arquitectura Hexagonal
+- Java 17
+- Spring Boot 3.3.x
+- Gradle Wrapper
+- Spring Data JPA (MySQL)
+- Spring Data MongoDB
+- Spring Boot Actuator + Micrometer Prometheus
+- Logback + Logstash Encoder
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    ADAPTADORES DE ENTRADA                       │
-│                     (HTTP REST/Controllers)                      │
-│                                                                   │
-│    ProductoController ────────┬────── InventarioController       │
-└────────────────────────────────┼────────────────────────────────┘
-                                 │
-                    (Implementan Puertos de Entrada)
-                                 │
-┌────────────────────────────────▼────────────────────────────────┐
-│                      PUERTOS DE ENTRADA                          │
-│                    (Casos de Uso / Use Cases)                   │
-│                                                                   │
-│    ProductoUseCase ──────────┬────── InventarioUseCase           │
-└────────────────────────────────┼────────────────────────────────┘
-                                 │
-┌────────────────────────────────▼────────────────────────────────┐
-│                        DOMINIO (NÚCLEO)                          │
-│                   (Lógica de Negocio Pura)                      │
-│                                                                   │
-│    ProductoServiceImpl ────────┬────── InventarioServiceImpl       │
-│                               │                                   │
-│                         (Usa Puertos de Salida)                  │
-└────────────────────────────────┼────────────────────────────────┘
-                                 │
-┌────────────────────────────────▼────────────────────────────────┐
-│                      PUERTOS DE SALIDA                           │
-│                   (Interfaces de Dependencias)                  │
-│                                                                   │
-│  ProductoRepositoryPort ──────┬────── InventarioRepositoryPort   │
-└────────────────────────────────┼────────────────────────────────┘
-                                 │
-┌────────────────────────────────▼────────────────────────────────┐
-│                   ADAPTADORES DE SALIDA                          │
-│            (Implementaciones de Persistencia)                    │
-│                                                                   │
-│  ProductoRepositoryAdapter────┬────── InventarioRepositoryAdapter│
-│         (JPA)                  │           (MongoDB)             │
-└────────────────────────────────┼────────────────────────────────┘
-                                 │
-┌────────────────────────────────▼────────────────────────────────┐
-│                    BASES DE DATOS                                │
-│                                                                   │
-│    MySQL (Productos) ────────────── MongoDB (Inventario)        │
-└─────────────────────────────────────────────────────────────────┘
+## Configuración local del micro
+
+Archivo: `src/main/resources/application.properties`
+
+Valores relevantes actuales:
+
+- Puerto app: `8080` (default Spring Boot)
+- MySQL: `localhost:3306`, DB `atm`
+- MongoDB: `localhost:27017`, DB `inventarios`
+- Actuator expuesto: `prometheus,health,metrics`
+
+Archivo: `src/main/resources/logback-spring.xml`
+
+- Perfil `!logstash`: solo consola.
+- Perfil `logstash`: consola + envío TCP a `localhost:5000`.
+
+## Arranque rápido
+
+### 1) Levantar infraestructura (repo de infra)
+
+En tu repo de infraestructura, levanta lo necesario para desarrollo.
+Normalmente incluye:
+
+- MySQL
+- MongoDB
+- Prometheus
+- Grafana
+- Logstash
+- Elasticsearch
+- Kibana
+
+Ejemplo:
+
+```powershell
+Set-Location "C:\RUTA\A\TU\REPO-INFRA"
+docker compose up -d
+docker compose ps
 ```
 
----
+### 2) Ejecutar microservicio local
 
-## 🎯 Componentes Clave
+Desde este repo (`backInventarios-hexagonal`):
 
-### 📦 Dominio (`models/`)
-- **Entidades Puras**: `Inventario.java`, `Producto.java`
-- **Sin dependencias** de frameworks (JPA, MongoDB, Spring)
-- Contienen solo lógica de negocio básica
-- Fáciles de testear
-
-### 🔌 Puertos (`ports/`)
-
-#### Puertos de Entrada (Use Cases)
-- `ProductoUseCase.java`: Define qué operaciones puedo hacer con productos
-- `InventarioUseCase.java`: Define qué operaciones puedo hacer con inventarios
-- El dominio los **implementa** (no depende de ellos)
-
-#### Puertos de Salida
-- `ProductoRepositoryPort.java`: Contrato para acceso a datos de productos
-- `InventarioRepositoryPort.java`: Contrato para acceso a datos de inventarios
-- El dominio los **usa** (depende de abstracciones, no implementaciones)
-
-### 🚀 Aplicación (`service/impl/`)
-- Implementaciones de puertos de entrada
-- Coordina entre puertos de entrada y salida
-- Contiene la lógica de casos de uso
-- Independiente de frameworks
-
-### 🔧 Adaptadores de Salida (`repository/`)
-
-**Entidades** (`entity/`):
-- `ProductoEntity.java`: Mapeo JPA
-- `InventarioEntity.java`: Mapeo MongoDB
-- Tienen anotaciones del framework
-
-**Repositorios del Framework**:
-- `jpa/ProductoRepository.java`: Extiende `JpaRepository`
-- `mongo/InventarioRepository.java`: Extiende `MongoRepository`
-
-**Adaptadores** (`adapter/`):
-- `ProductoRepositoryAdapter.java`: Implementa `ProductoRepositoryPort`
-- `InventarioRepositoryAdapter.java`: Implementa `InventarioRepositoryPort`
-- Mapean entre entidades de persistencia y dominio
-
-### 🌐 Adaptadores de Entrada (`controller/`)
-- `ProductoController.java`: REST API para productos
-- `InventarioController.java`: REST API para inventario
-- Dependen de puertos de entrada (use cases)
-- Transforman HTTP en dominio
-
----
-
-## ✨ Ventajas de esta Estructura
-
-✅ **Dominio Independiente**: El núcleo no depende de frameworks  
-✅ **Testeable**: Fácil crear tests sin bases de datos  
-✅ **Escalable**: Agregar nuevos adaptadores es simple  
-✅ **Mantenible**: Cambios en frameworks no afectan dominio  
-✅ **Desacoplado**: Cada componente tiene responsabilidad clara  
-✅ **Flexible**: Cambiar de JPA a Hibernate, MySQL a PostgreSQL, etc.
-
----
-
-## 🔄 Migración de la Estructura Actual
-
-| Actual | Recomendado | Cambios |
-|--------|------------|---------|
-| `models/` | `models/` | ✓ Sin cambios |
-| `service/IProductoService.java` | `ports/ProductoUseCase.java` | Renombrar |
-| `service/ProductoServiceImpl.java` | `service/impl/ProductoServiceImpl.java` | Mover a subcarpeta |
-| `repository/ProductoEntity.java` | `repository/entity/ProductoEntity.java` | Mover |
-| `repository/ProductoRepository.java` | `repository/jpa/ProductoRepository.java` | Mover |
-| `repository/ProductoRepositoryPort.java` | `ports/ProductoRepositoryPort.java` | Mover |
-| `repository/ProductoRepositoryAdapter.java` | `repository/adapter/ProductoRepositoryAdapter.java` | Mover |
-| `controller/` | `controller/` | ✓ Sin cambios |
-
----
-
-## 📱 API Endpoints
-
-### Productos
-- `GET /api/productos` - Obtener todos los productos
-- `GET /api/productos/test` - Endpoint de prueba
-
-### Inventario
-- `GET /api/inventario` - Obtener todos los registros
-- `POST /api/inventario/registrar` - Registrar nuevo inventario
-- `PUT /api/inventario/actualizar-estado/{id}` - Actualizar estado
-
----
-
-## 🛠️ Tecnologías
-
-- **Java 17+**
-- **Spring Boot 3.x**
-- **Spring Data JPA** (MySQL)
-- **Spring Data MongoDB**
-- **Gradle**
-- **Lombok**
-
----
-
-## 🚀 Cómo Ejecutar
-
-```bash
-# Compilar
-./gradlew build
-
-# Ejecutar
-./gradlew bootRun
+```powershell
+Set-Location "C:\ESTRUCTURA-HEXAGONAL\backInventarios-hexagonal"
+.\gradlew bootRun
 ```
 
----
+Si quieres enviar logs a Logstash:
 
-## 📚 Referencias
+```powershell
+Set-Location "C:\ESTRUCTURA-HEXAGONAL\backInventarios-hexagonal"
+.\gradlew bootRun --args="--spring.profiles.active=logstash"
+```
 
-- [Arquitectura Hexagonal - Alistair Cockburn](https://alistair.cockburn.us/hexagonal-architecture/)
-- [Spring Boot Documentation](https://spring.io/projects/spring-boot)
+## Endpoints principales
+
+### API de productos
+
+- `GET /api/productos`
+- `GET /api/productos/test`
+
+### API de inventario
+
+- `GET /api/inventario`
+- `POST /api/inventario/registrar`
+- `PUT /api/inventario/actualizar-estado/{id}?estado=...`
+
+### Actuator
+
+- `GET /actuator/health`
+- `GET /actuator/prometheus`
+- `GET /actuator/metrics`
+
+## Observabilidad
+
+### Métricas (Prometheus + Grafana)
+
+Flujo general:
+
+`Spring Boot /actuator/prometheus` -> `Prometheus` -> `Grafana`
+
+Funcionamiento paso a paso:
+
+1. El microservicio publica las métricas en el endpoint:
+   - `GET http://localhost:8080/actuator/prometheus`
+2. Prometheus scrapea ese endpoint (por ejemplo con target `host.docker.internal:8080` y `metrics_path: /actuator/prometheus`) y guarda las métricas como series temporales en su TSDB.
+3. Grafana no lee directo del micro; Grafana consulta a Prometheus como datasource (normalmente `http://prometheus:9090`) y con eso dibuja los dashboards.
+
+Verificación rápida:
+
+```powershell
+Invoke-WebRequest -Uri "http://localhost:8080/actuator/prometheus" -UseBasicParsing
+```
+
+- Prometheus UI: `http://localhost:9090`
+- Grafana UI: `http://localhost:3000`
+
+Consultas PromQL útiles:
+
+```promql
+up
+```
+
+```promql
+sum(rate(http_server_requests_seconds_count[1m]))
+```
+
+```promql
+sum(jvm_memory_used_bytes)
+```
+
+### Logs (Logstash + Elasticsearch + Kibana)
+
+Flujo:
+
+`Spring Boot (logback)` -> `Logstash:5000` -> `Elasticsearch` -> `Kibana`
+
+Verificación rápida:
+
+```powershell
+docker logs logstash --tail 100
+```
+
+```powershell
+Invoke-WebRequest -Uri "http://localhost:9200/_cat/indices?v" -UseBasicParsing
+```
+
+- Kibana UI: `http://localhost:5601`
+- Data view típico: `inventarios-logs-*` (según tu pipeline).
+
+## Prueba de carga rápida para generar métricas/logs
+
+```powershell
+1..50 | ForEach-Object { Invoke-WebRequest -Uri "http://localhost:8080/actuator/health" -UseBasicParsing | Out-Null }
+```
+
+Después de esto deberías ver movimiento en Grafana y eventos en Kibana.
+
